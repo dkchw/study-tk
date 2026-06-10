@@ -1,0 +1,2 @@
+[console_scripts]
+study-tk = study_tk.cli:main
