@@ -42,10 +42,6 @@ def get_mistral_api_key() -> Optional[str]:
     return get_api_key("MISTRAL_API_KEY")
 
 
-def get_zai_api_key() -> Optional[str]:
-    """Get Z.AI API key from multiple sources in order of priority"""
-    return get_api_key("ZAI_API_KEY")
-
 
 def save_api_key(key_name: str, api_key: str) -> bool:
     """Save an API key to config file"""
@@ -87,6 +83,3 @@ def save_mistral_api_key(api_key: str) -> bool:
     return save_api_key("MISTRAL_API_KEY", api_key)
 
 
-def save_zai_api_key(api_key: str) -> bool:
-    """Save Z.AI API key to config file"""
-    return save_api_key("ZAI_API_KEY", api_key)

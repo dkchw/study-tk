@@ -53,17 +53,8 @@ except ImportError as e:
     except ImportError as e2:
         MISTRAL_AVAILABLE = False
         MISTRAL_IMPORT_ERROR = f"v2 error: {str(e)}; v1 error: {str(e2)}"
-
-ZAI_IMPORT_ERROR = None
-try:
-    from zai import ZaiClient
-    ZAI_AVAILABLE = True
-except ImportError as e:
-    ZAI_AVAILABLE = False
-    ZAI_IMPORT_ERROR = str(e)
-
 from study_tk.core.base_tool import BaseTool
-from study_tk.core.config import get_mistral_api_key, get_zai_api_key
+from study_tk.core.config import get_mistral_api_key
 from study_tk.commands.base_command import BaseCommand
 
 
@@ -77,12 +68,6 @@ class OCRCommand(BaseCommand, BaseTool):
             self.mistral_client = Mistral(api_key=api_key) if api_key else None
         else:
             self.mistral_client = None
-
-        if ZAI_AVAILABLE:
-            api_key = get_zai_api_key()
-            self.zai_client = ZaiClient(api_key=api_key) if api_key else None
-        else:
-            self.zai_client = None
 
     def _call_with_retry(self, func, *args, max_retries=3, initial_delay=2, **kwargs):
         """Generic retry wrapper for API calls with exponential backoff"""
@@ -116,16 +101,6 @@ class OCRCommand(BaseCommand, BaseTool):
                 return
             if not self.mistral_client:
                 print("\nError: MISTRAL_API_KEY not configured.")
-                print("\nTo set up your API key, run:")
-                print("  study-tk setup")
-                return
-        elif provider == 'zai':
-            if not ZAI_AVAILABLE:
-                print(f"Error: Z.AI SDK not available ({ZAI_IMPORT_ERROR}).")
-                print("Run: pip install zai-sdk")
-                return
-            if not self.zai_client:
-                print("\nError: ZAI_API_KEY not configured.")
                 print("\nTo set up your API key, run:")
                 print("  study-tk setup")
                 return
@@ -212,11 +187,6 @@ class OCRCommand(BaseCommand, BaseTool):
                             self._process_single_pdf_mistral_flat(pdf_file, Path(args.output), args)
                         else:
                             self._process_single_pdf_mistral_separate(pdf_file, args)
-                    elif provider == 'zai':
-                        if args.output_mode == 'single':
-                            self._process_single_pdf_zai_flat(pdf_file, Path(args.output))
-                        else:
-                            self._process_single_pdf_zai_separate(pdf_file)
                     elif provider == 'pymupdf':
                         if args.output_mode == 'single':
                             self._process_single_pdf_pymupdf_flat(pdf_file, Path(args.output), args)
@@ -241,9 +211,9 @@ class OCRCommand(BaseCommand, BaseTool):
         parser.add_argument('--output-mode', '-m', choices=['separate', 'single'],
                            default='separate',
                            help="Output mode: 'separate' (each PDF in its own folder) or 'single' (all files in one folder, default: 'separate')")
-        parser.add_argument('--provider', '-p', choices=['mistral', 'zai', 'tesseract', 'pymupdf'],
-                           default='zai',
-                           help="OCR provider: 'zai', 'mistral', 'tesseract' (Tesseract OCR for image folders), or 'pymupdf' (pymupdf4llm, default: 'zai')")
+        parser.add_argument('--provider', '-p', choices=['mistral', 'tesseract', 'pymupdf'],
+                           default='pymupdf',
+                           help="OCR provider: 'mistral', 'tesseract' (Tesseract OCR for image folders), or 'pymupdf' (pymupdf4llm, default: 'pymupdf')")
         parser.add_argument('--images-only', action='store_true',
                            help="Only extract images from the PDF, no markdown/text output")
         parser.add_argument('--table-format', choices=['null', 'markdown', 'html'],
@@ -465,81 +435,6 @@ class OCRCommand(BaseCommand, BaseTool):
             # Save results
             with open(output_md, 'w', encoding='utf-8') as f:
                 f.write(combined_markdown)
-
-            print(f"Saved: {output_md}")
-
-        except Exception as e:
-            if "name resolution" in str(e).lower():
-                print(f"Error processing {pdf_path.name}: Network connection issue (DNS).")
-                print("If you are using a proxy, ensure it is correctly configured (e.g., HTTP_PROXY env var).")
-            else:
-                print(f"Error processing {pdf_path.name}: {str(e)}")
-
-    def _process_single_pdf_zai_separate(self, pdf_path: Path):
-        """Process a single PDF file through Z.AI OCR with separate folder structure"""
-        print(f"\nProcessing {pdf_path.name} with Z.AI...")
-
-        try:
-            # Read file and encode to base64
-            file_bytes = pdf_path.read_bytes()
-            base64_file = base64.b64encode(file_bytes).decode('utf-8')
-            data_uri = f"data:application/pdf;base64,{base64_file}"
-
-            # Call layout parsing API with retry
-            response = self._call_with_retry(
-                self.zai_client.layout_parsing.create,
-                model="glm-ocr",
-                file=data_uri
-            )
-
-            # Create main output folder
-            base_name = pdf_path.stem
-            main_folder = Path(base_name)
-            main_folder.mkdir(parents=True, exist_ok=True)
-
-            output_md = main_folder / f"{base_name}.md"
-
-            markdown_content = response.md_results
-
-            # Save results
-            with open(output_md, 'w', encoding='utf-8') as f:
-                f.write(markdown_content)
-
-            print(f"Saved: {output_md}")
-
-        except Exception as e:
-            if "name resolution" in str(e).lower():
-                print(f"Error processing {pdf_path.name}: Network connection issue (DNS).")
-                print("If you are using a proxy, ensure it is correctly configured (e.g., HTTP_PROXY env var).")
-            else:
-                print(f"Error processing {pdf_path.name}: {str(e)}")
-
-    def _process_single_pdf_zai_flat(self, pdf_path: Path, output_dir: Path):
-        """Process a single PDF file through Z.AI OCR with flat folder structure"""
-        print(f"\nProcessing {pdf_path.name} with Z.AI...")
-
-        try:
-            output_dir.mkdir(parents=True, exist_ok=True)
-            # Read file and encode to base64
-            file_bytes = pdf_path.read_bytes()
-            base64_file = base64.b64encode(file_bytes).decode('utf-8')
-            data_uri = f"data:application/pdf;base64,{base64_file}"
-
-            # Call layout parsing API with retry
-            response = self._call_with_retry(
-                self.zai_client.layout_parsing.create,
-                model="glm-ocr",
-                file=data_uri
-            )
-
-            base_name = pdf_path.stem
-            output_md = output_dir / f"{base_name}.md"
-
-            markdown_content = response.md_results
-
-            # Save results
-            with open(output_md, 'w', encoding='utf-8') as f:
-                f.write(markdown_content)
 
             print(f"Saved: {output_md}")
 

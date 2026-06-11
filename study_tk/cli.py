@@ -135,12 +135,11 @@ Examples:
         ).ask()
 
         if choice == "OCR PDFs (GLM-OCR, Mistral, Local)":
-            from study_tk.commands.ocr import MISTRAL_AVAILABLE, ZAI_AVAILABLE, TESSERACT_AVAILABLE, TESSERACT_BINARY_FOUND
+            from study_tk.commands.ocr import MISTRAL_AVAILABLE, TESSERACT_AVAILABLE, TESSERACT_BINARY_FOUND
 
             provider_choice = questionary.select(
                 "Select OCR provider:",
                 choices=[
-                    questionary.Choice("Z.AI GLM-OCR (Cloud, High Quality)", value="zai"),
                     questionary.Choice("Mistral AI (Cloud, High Quality)", value="mistral"),
                     questionary.Choice("Tesseract (Local, handles image folders)", value="tesseract"),
                     questionary.Choice("PyMuPDF (Local, Fast, Text-layer extraction)", value="pymupdf"),
@@ -149,9 +148,6 @@ Examples:
 
             if provider_choice == 'mistral' and not MISTRAL_AVAILABLE:
                 console.print("[red]Error: Mistral AI library not available.[/red] Run: [bold]pip install mistralai[/bold]")
-                continue
-            if provider_choice == 'zai' and not ZAI_AVAILABLE:
-                console.print("[red]Error: Z.AI SDK not available.[/red] Run: [bold]pip install zai-sdk[/bold]")
                 continue
             if provider_choice == 'tesseract':
                 if not TESSERACT_AVAILABLE:

@@ -92,7 +92,7 @@ nix develop
 ```
 
 This will drop you into a shell containing:
-- Python 3 with `pymupdf`, `pymupdf4llm`, `mistralai`, `zai-sdk`, `rich`, `questionary`, `tqdm`, `pytesseract`, `pillow`, and `python-dotenv`.
+- Python 3 with `pymupdf`, `pymupdf4llm`, `mistralai`, `rich`, `questionary`, `tqdm`, `pytesseract`, `pillow`, and `python-dotenv`.
 - The `tesseract` binary in your `PATH`.
 
 ---
@@ -100,4 +100,3 @@ This will drop you into a shell containing:
 ## 4. Key Benefits of this Nix Packaging
 
 - **Automatic Binary Wrapping**: The Nix package is wrapped so that `tesseract` is automatically prefixed to the `PATH` of the `study-tk` executable. You do not need to install Tesseract globally on your system.
-- **Self-contained Dependencies**: It packages `zai-sdk` (which is not available in upstream nixpkgs) inline within the flake, ensuring the application builds successfully without user intervention.

@@ -17,32 +17,6 @@
           pkgs = pkgsFor system;
           python = pkgs.python3;
 
-          # Packaging zai-sdk pulling directly from GitHub source
-          zai-sdk = python.pkgs.buildPythonPackage rec {
-            pname = "zai-sdk";
-            version = "0.2.2";
-            format = "pyproject";
-
-            src = pkgs.fetchurl {
-              url = "https://github.com/zai-org/z-ai-sdk-python/archive/refs/tags/v${version}.tar.gz";
-              hash = "sha256-oCKc9VSffIH9iozwpFW0Bdv29sFaWaLeRb6Oa6wON/4=";
-            };
-
-            nativeBuildInputs = with python.pkgs; [
-              poetry-core
-            ];
-
-            propagatedBuildInputs = with python.pkgs; [
-              cachetools
-              httpx
-              pydantic
-              pyjwt
-              sniffio
-            ];
-
-            doCheck = false;
-          };
-
           study-tk = python.pkgs.buildPythonApplication {
             pname = "study-tk";
             version = "3.7.1";
@@ -59,7 +33,6 @@
               pymupdf
               pymupdf4llm
               mistralai
-              zai-sdk
               rich
               questionary
               tqdm

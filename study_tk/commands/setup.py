@@ -4,7 +4,7 @@ from pathlib import Path
 
 from study_tk.core.base_tool import BaseTool
 from study_tk.commands.base_command import BaseCommand
-from study_tk.core.config import save_mistral_api_key, save_zai_api_key
+from study_tk.core.config import save_mistral_api_key
 
 
 class SetupCommand(BaseCommand, BaseTool):
@@ -44,13 +44,6 @@ class SetupCommand(BaseCommand, BaseTool):
                 console.print("[green]✓ Mistral API key saved[/green]")
             else:
                 console.print("[red]✗ Failed to save Mistral API key[/red]")
-
-        zai_key = questionary.password("Enter your ZAI API key (press Enter to skip):").ask()
-        if zai_key:
-            if save_zai_api_key(zai_key):
-                console.print("[green]✓ ZAI API key saved[/green]")
-            else:
-                console.print("[red]✗ Failed to save ZAI API key[/red]")
 
         console.print("\n[bold green]Setup complete![/bold green] You can now use the OCR feature.")
         return True
